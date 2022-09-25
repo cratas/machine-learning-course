@@ -89,7 +89,7 @@ class Tree():
                     trios.append((z.value, y.value, x.value))
         return trios
 
-class SupportFinder():
+class SupportConfidenceFinder():
     def __init__(self, matrix, pairs, trios, support):
         self.matrix = matrix
         self.pairs = pairs
@@ -133,6 +133,7 @@ class SupportFinder():
             if self.get_support_pair(x) > self.support:
                 support = self.get_support_pair(x)
                 items = self.sort_items(x)
+                # return items with confidence
                 supported_pairs.append([items, round(support / self.get_support_single(items[0]), 2)])
 
         return supported_pairs
@@ -142,7 +143,8 @@ class SupportFinder():
         for x in self.trios:
             support = self.get_support_trio(x)
             if support > self.support:
-                supported_trios.append([self.sort_items(x), support])
+                items = self.sort_items(x)
+                supported_trios.append([items, round(support / self.get_support_pair((items[0], items[1])),2)])
         
         return supported_trios
 
@@ -156,8 +158,8 @@ def main():
     tree.generate_tree(tree.root)
     # tree.print_tree()
 
-    support_finder = SupportFinder(matrix, tree.get_pairs(), tree.get_trios(), 0.25)
-    print(support_finder.get_supported_pairs())
+    support_finder = SupportConfidenceFinder(matrix, tree.get_pairs(), tree.get_trios(), 0.15)
+    print(support_finder.get_supported_trios())
 
 if __name__ == "__main__":
     main()
