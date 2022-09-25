@@ -1,7 +1,11 @@
 import numpy as np
  
 INPUT_FILENAME = "test.dat"
+
+# chess.dat trios 17 223
  
+# https://wikimedia.org/api/rest_v1/media/math/render/svg/56af28fde7223928b137f59d5cb1ce9bd62ce33b
+
 class Node:
     def __init__(self, value, parent, childs):
         self.value = value
@@ -45,6 +49,7 @@ class MatrixBuilder:
  
         return loaded_data_list
 
+    
 class Tree():
     def __init__(self, headers, root):
         self.headers = headers
@@ -67,6 +72,80 @@ class Tree():
                 for z in y.childs:
                     print("--------" + str(z.value))
 
+
+    def get_pairs(self):
+        pairs = []
+        for x in self.root.childs:
+            for y in x.childs:
+                pairs.append((y.value, x.value))
+
+        return pairs
+
+    def get_trios(self):
+        trios = []
+        for x in self.root.childs:
+            for y in x.childs:
+                for z in y.childs:
+                    trios.append((z.value, y.value, x.value))
+        return trios
+
+class SupportFinder():
+    def __init__(self, matrix, pairs, trios, support):
+        self.matrix = matrix
+        self.pairs = pairs
+        self.trios = trios
+        self.support = support
+
+    def get_support_single(self, single):
+        count = 0
+        for x in self.matrix:
+            if x[single - 1] == 1:
+                count = count + 1
+
+        return count / len(self.matrix)
+
+    def get_support_pair(self, pair):
+        count = 0
+        for x in self.matrix:
+            if x[pair[0] - 1] == 1 and x[pair[1] - 1] == 1:
+                count = count + 1
+    
+        return count / len(self.matrix)
+
+    def get_support_trio(self, trio):
+        count = 0
+        for x in self.matrix:
+            if x[trio[0] - 1] == 1 and x[trio[1] - 1] == 1 and x[trio[2] - 1] == 1:
+                count = count + 1
+    
+        return count / len(self.matrix)
+
+
+    def sort_items(self, items):
+        items_list = list(items)
+        items_list.sort(key=self.get_support_single)
+        return tuple(items_list)
+    
+    def get_supported_pairs(self):
+        supported_pairs = []
+        for x in self.pairs:
+
+            if self.get_support_pair(x) > self.support:
+                support = self.get_support_pair(x)
+                items = self.sort_items(x)
+                supported_pairs.append([items, round(support / self.get_support_single(items[0]), 2)])
+
+        return supported_pairs
+
+    def get_supported_trios(self):
+        supported_trios = []
+        for x in self.trios:
+            support = self.get_support_trio(x)
+            if support > self.support:
+                supported_trios.append([self.sort_items(x), support])
+        
+        return supported_trios
+
 def main():
     matrix_builder = MatrixBuilder(INPUT_FILENAME)
     matrix = matrix_builder.get_matrix()
@@ -75,7 +154,12 @@ def main():
     tree = Tree(list(range(1, len(matrix[0]) + 1)), root)
 
     tree.generate_tree(tree.root)
-    tree.print_tree()
+    # tree.print_tree()
+
+    support_finder = SupportFinder(matrix, tree.get_pairs(), tree.get_trios(), 0.25)
+    print(support_finder.get_supported_pairs())
 
 if __name__ == "__main__":
     main()
+
+    
